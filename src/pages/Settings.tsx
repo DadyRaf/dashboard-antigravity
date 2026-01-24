@@ -1,13 +1,37 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
-import { User, Lock, Building, Camera, Mail, ShieldCheck, Check } from "lucide-react"
+import { User, Lock, Building, Camera, Mail, ShieldCheck, Save, CheckCircle2 } from "lucide-react"
 import { useUser } from "../context/user-context"
 import { cn } from "../lib/utils"
 
 export function Settings() {
     const { profile, updateProfile } = useUser()
-    const [isEditing, setIsEditing] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    // Local state for profile fields
+    const [localProfile, setLocalProfile] = useState({
+        name: "",
+        jobTitle: "",
+        companyName: "",
+        avatarUrl: "" as string | null
+    })
+
+    const [isSaving, setIsSaving] = useState(false)
+    const [hasChanges, setHasChanges] = useState(false)
+    const [saveSuccess, setSaveSuccess] = useState(false)
+
+    // Initialize local state from context
+    useEffect(() => {
+        if (profile) {
+            setLocalProfile({
+                name: profile.name || "",
+                jobTitle: profile.jobTitle || "",
+                companyName: profile.companyName || "",
+                avatarUrl: profile.avatarUrl || null
+            })
+        }
+    }, [profile])
+
 
     // Local state for passwords
     const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" })
@@ -20,8 +44,33 @@ export function Settings() {
         const file = e.target.files?.[0]
         if (file) {
             const imageUrl = URL.createObjectURL(file)
-            updateProfile({ avatarUrl: imageUrl })
+            setLocalProfile(prev => ({ ...prev, avatarUrl: imageUrl }))
+            setHasChanges(true)
+            setSaveSuccess(false)
         }
+    }
+
+    const handleChange = (field: keyof typeof localProfile, value: string) => {
+        setLocalProfile(prev => ({ ...prev, [field]: value }))
+        setHasChanges(true)
+        setSaveSuccess(false)
+    }
+
+    const handleSave = async () => {
+        setIsSaving(true)
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 600))
+
+        updateProfile(localProfile)
+
+        setIsSaving(false)
+        setHasChanges(false)
+        setSaveSuccess(true)
+
+        // Reset success message after 3 seconds
+        setTimeout(() => {
+            setSaveSuccess(false)
+        }, 3000)
     }
 
     const getStrengthColor = (pass: string) => {
@@ -47,9 +96,20 @@ export function Settings() {
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-card border rounded-xl p-6 shadow-sm space-y-6"
                 >
-                    <div className="flex items-center gap-2 pb-4 border-b">
-                        <User className="w-5 h-5 text-primary" />
-                        <h2 className="font-semibold text-lg">Profile & Branding</h2>
+                    <div className="flex items-center gap-2 pb-4 border-b justify-between">
+                        <div className="flex items-center gap-2">
+                            <User className="w-5 h-5 text-primary" />
+                            <h2 className="font-semibold text-lg">Profile & Branding</h2>
+                        </div>
+                        {saveSuccess && (
+                            <motion.div
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="flex items-center gap-2 text-green-500 text-sm font-medium"
+                            >
+                                <CheckCircle2 className="w-4 h-4" /> Saved successfully
+                            </motion.div>
+                        )}
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-8 items-start">
@@ -59,8 +119,8 @@ export function Settings() {
                                 onClick={handleAvatarClick}
                                 className="relative w-24 h-24 rounded-full overflow-hidden cursor-pointer group border-2 border-dashed border-muted-foreground/30 hover:border-primary transition-colors"
                             >
-                                {profile.avatarUrl ? (
-                                    <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                {localProfile.avatarUrl ? (
+                                    <img src={localProfile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-muted flex items-center justify-center">
                                         <User className="w-8 h-8 text-muted-foreground" />
@@ -87,8 +147,8 @@ export function Settings() {
                                     <label className="text-sm font-medium">Full Name</label>
                                     <input
                                         type="text"
-                                        value={profile.name}
-                                        onChange={(e) => updateProfile({ name: e.target.value })}
+                                        value={localProfile.name}
+                                        onChange={(e) => handleChange("name", e.target.value)}
                                         className="w-full p-2 rounded-md border bg-background focus:ring-2 focus:ring-primary focus:outline-none"
                                     />
                                 </div>
@@ -96,8 +156,8 @@ export function Settings() {
                                     <label className="text-sm font-medium">Job Title</label>
                                     <input
                                         type="text"
-                                        value={profile.jobTitle}
-                                        onChange={(e) => updateProfile({ jobTitle: e.target.value })}
+                                        value={localProfile.jobTitle}
+                                        onChange={(e) => handleChange("jobTitle", e.target.value)}
                                         className="w-full p-2 rounded-md border bg-background focus:ring-2 focus:ring-primary focus:outline-none"
                                     />
                                 </div>
@@ -110,11 +170,32 @@ export function Settings() {
                                 </label>
                                 <input
                                     type="text"
-                                    value={profile.companyName}
-                                    onChange={(e) => updateProfile({ companyName: e.target.value })}
+                                    value={localProfile.companyName}
+                                    onChange={(e) => handleChange("companyName", e.target.value)}
                                     className="w-full p-2 rounded-md border bg-background focus:ring-2 focus:ring-primary focus:outline-none font-medium"
                                 />
                                 <p className="text-xs text-muted-foreground">This will be displayed in the sidebar.</p>
+                            </div>
+
+                            <div className="flex justify-end pt-4">
+                                <button
+                                    onClick={handleSave}
+                                    disabled={!hasChanges || isSaving}
+                                    className={cn(
+                                        "px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-all",
+                                        hasChanges
+                                            ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                                            : "bg-muted text-muted-foreground cursor-not-allowed opacity-70"
+                                    )}
+                                >
+                                    {isSaving ? (
+                                        <>Updating...</>
+                                    ) : (
+                                        <>
+                                            <Save className="w-4 h-4" /> Update Profile
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -142,7 +223,8 @@ export function Settings() {
                                 <input
                                     type="email"
                                     value={profile.email}
-                                    onChange={(e) => updateProfile({ email: e.target.value })}
+                                    // onChange is removed as email is disabled for now
+                                    readOnly
                                     className="flex-1 p-2 rounded-md border bg-muted/50 text-muted-foreground focus:outline-none cursor-not-allowed"
                                     disabled
                                 />

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { LayoutDashboard, Database, Bot, FileText, Settings, ChevronLeft, ChevronRight, Menu, Search } from "lucide-react"
+import { LayoutDashboard, Database, Bot, FileText, Settings, ChevronLeft, ChevronRight, Search } from "lucide-react"
 import { cn } from "../lib/utils"
 import { Link, useLocation } from "react-router-dom"
 import { useUser } from "../context/user-context"
@@ -40,8 +40,8 @@ export function Sidebar({ className }: SidebarProps) {
             )}
         >
             <div className="flex items-center px-6 mb-10 h-10">
-                <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-8 h-8 rounded-full bg-primary shrink-0 flex items-center justify-center overflow-hidden border border-border">
+                <Link to="/settings" className="flex items-center gap-3 overflow-hidden group/profile cursor-pointer">
+                    <div className="w-8 h-8 rounded-full bg-primary shrink-0 flex items-center justify-center overflow-hidden border border-border group-hover/profile:border-primary transition-colors">
                         {profile?.avatarUrl ? (
                             <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
@@ -53,10 +53,10 @@ export function Sidebar({ className }: SidebarProps) {
                         transition={{ duration: 0.2 }}
                         className="flex flex-col whitespace-nowrap overflow-hidden"
                     >
-                        <span className="font-bold text-sm leading-none">{profile?.companyName || "Antigravity"}</span>
+                        <span className="font-bold text-sm leading-none group-hover/profile:text-primary transition-colors">{profile?.companyName || "Antigravity"}</span>
                         <span className="text-xs text-muted-foreground leading-none mt-1">{profile?.name}</span>
                     </motion.div>
-                </div>
+                </Link>
             </div>
 
             <nav className="flex-1 px-4 space-y-2">
