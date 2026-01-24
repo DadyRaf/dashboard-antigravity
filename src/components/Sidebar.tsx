@@ -54,7 +54,7 @@ export function Sidebar({ className }: SidebarProps) {
                         className="flex flex-col whitespace-nowrap overflow-hidden"
                     >
                         <span className="font-bold text-sm leading-none group-hover/profile:text-primary transition-colors">{profile?.companyName || "Antigravity"}</span>
-                        <span className="text-xs text-muted-foreground leading-none mt-1">{profile?.name}</span>
+                        <span className="text-xs text-muted-foreground leading-none mt-1">{profile?.name || "Guest User"}</span>
                     </motion.div>
                 </Link>
             </div>
